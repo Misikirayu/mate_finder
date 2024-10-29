@@ -15,15 +15,19 @@ export async function GET(request) {
     try {
       decoded = jwt.verify(token, JWT_SECRET);
     } catch (err) {
+      console.error('Token verification error:', err);
       return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
     }
 
     return new Promise((resolve) => {
+      console.log('Fetching users for userId:', decoded.userId);
+      
       // Get all users except the current user
       db.all(
         `SELECT id, firstName, lastName, email, bio, studyInterests 
          FROM users 
-         WHERE id != ?`,
+         WHERE id != ?
+         ORDER BY created_at DESC`,
         [decoded.userId],
         (err, users) => {
           if (err) {
@@ -32,6 +36,7 @@ export async function GET(request) {
             return;
           }
 
+          console.log('Found users:', users.length);
           resolve(NextResponse.json({ users }, { status: 200 }));
         }
       );
